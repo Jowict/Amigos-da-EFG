@@ -1,6 +1,7 @@
 import json
 from fastapi import FastAPI
 from Pessoa import Pessoa
+from pessoa_model import PessoaModelo
 
 p1 = Pessoa(
     '1',
@@ -84,12 +85,44 @@ def get_pessoa(id_pessoa):
     return "Pessoa não encontrada"
 
 @app.get('/api/users/{nome_pessoa}')
-def get_pessoa(nome_pessoa):
+def get_pessoa(nome_pessoa: str):
     for pessoa in lista_pessoas:
         if pessoa.nome == nome_pessoa:
             return pessoa
         
     return lista_pessoas[1]
 
-@app.post('/api/v2/users/')
-def create_pessoa():
+@app.post('/api/v3/users/')
+def post_pessoa(pessoa: PessoaModelo):
+    with open('user.json', encoding='utf-8') as arquivo:
+        pessoas = list(json.loads(arquivo.read()))
+    
+    pessoa.id = pessoas[-1]['id'] + 1
+    pessoas.append(pessoa.model_dump())
+    
+    with open('user.json', 'w', encoding='utf-8') as arquivo:
+        arquivo.write(json.dumps(pessoas, indent=4))
+
+    return f'Pessoa com nome {pessoa.nome} criada com sucesso'
+
+@app.delete('/api/v3/users/{id}')
+def delete_pessoa(id: int):
+    with open('user.json', encoding='utf-8') as arquivo:
+        pessoas = list(json.loads(arquivo.read()))
+
+    for posicao in range(len(pessoas)):
+        print(posicao)
+        if pessoas[posicao]['id'] == id:
+            pessoas.pop(posicao)
+
+            with open('user.json', 'w', encoding='utf-8') as arquivo:
+                arquivo.write(json.dumps(pessoas, indent=4))
+
+            return 'pessoa foi de vala'
+
+    return 'pessoa nao existe'
+
+@app.patch ('/api/v3/users/{id}')
+def update_pesoas(id: int):
+    with open('user.json', encoding='utf-8') as arquivo:
+        pessoas = list(json.loads(arquivo.read()))
